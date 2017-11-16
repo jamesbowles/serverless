@@ -107,3 +107,7 @@ learnjs.applyObject = function (obj, elm) {
     elm.find('[data-name="' + key + '"]').text(obj[key]);
   }
 }
+
+function googleSignIn() { 
+  console.log(arguments);
+}

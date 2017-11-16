@@ -9,7 +9,7 @@ describe('LearnJS', function () {
     expect($('.view-container .landing-view').length).toEqual(1);
   });
 
-  it('invokes the router when loaded', function() {
+  it('invokes the router when loaded', function () {
     spyOn(learnjs, 'showView');
     learnjs.appOnReady();
     expect(learnjs.showView).toHaveBeenCalledWith(window.location.hash);
@@ -29,9 +29,27 @@ describe('LearnJS', function () {
   });
 
   describe('problem view', function () {
+    var view;
+    beforeEach(function () {
+      view = learnjs.problemView('1');
+    })
+
     it('has a title that includes the problem number', function () {
-      var view = learnjs.problemView('1');
       expect(view.find('.title').text()).toEqual('Problem #1');
+    });
+
+    describe('answer section', function () {
+      it('checks the answer is correct', function () {
+        view.find('.answer').val('true');
+        view.find('.check-btn').click();
+        expect(view.find('.correct-flash span').text()).toEqual('Correct! ');
+      });
+
+      it('rejects incorrect answers', function () {
+        view.find('.answer').val('false');
+        view.find('.check-btn').click();
+        expect(view.find('.result').text()).toEqual('Incorrect!');
+      });
     });
   });
 });

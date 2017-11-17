@@ -46,7 +46,6 @@ learnjs.problemView = function (data) {
     }
   });
 
-
   view.find('.check-btn').click(checkAnswerClick);
   view.find('.title').text('Problem #' + problemNumber);
   learnjs.applyObject(problemData, view);
@@ -58,7 +57,48 @@ learnjs.profileView = function () {
   learnjs.identity.done(function (identity) {
     view.find('.email').text(identity.email);
   });
+
   return view;
+}
+
+learnjs.answersView = function () {
+  var view = learnjs.template('answers-view');
+  var answersList = learnjs.template('answers-list');
+
+  learnjs.problems.map(function(problem) {
+    debugger
+
+  })
+
+
+
+  learnjs.answers(1).then(function (data) {
+    if (data.Payload) {
+      answersList.find('h4').text("Problem " + problemNumber)
+
+      var results = JSON.parse(data.Payload, (key, value) => {
+        if(key =="") return;
+        answersList.find('ul').append("<li>" + key + ": " + value + "</li>");
+        return value;
+      })
+
+      view.append(answersList);
+    }
+  });
+
+  return view;
+}
+
+learnjs.answers = function (problemId) {
+  return learnjs.identity.then(function () {
+    var lambda = new AWS.Lambda(); var params = {
+      FunctionName: 'popularAnswers',
+      Payload: JSON.stringify({ problemNumber: problemId })
+    };
+    return learnjs.sendAwsRequest(lambda.invoke(params), function () {
+      return learnjs.popularAnswers(problemId);
+    });
+  });
 }
 
 learnjs.template = function (name) {
@@ -91,7 +131,8 @@ learnjs.showView = function (hash) {
     '': learnjs.landingView,
     '#': learnjs.landingView,
     '#problem': learnjs.problemView,
-    '#profile': learnjs.profileView
+    '#profile': learnjs.profileView,
+    '#answers': learnjs.answersView
   };
   var hashParts = hash.split('-');
   var viewFn = routes[hashParts[0]];
@@ -147,7 +188,7 @@ learnjs.saveAnswer = function (problemId, answer) {
         answer: answer
       }
     };
-    return learnjs.sendDbRequest(db.put(item), function () {
+    return learnjs.sendAwsRequest(db.put(item), function () {
       return learnjs.saveAnswer(problemId, answer);
     })
   });
@@ -162,13 +203,13 @@ learnjs.fetchAnswer = function (problemId) {
         problemId: problemId
       }
     };
-    return learnjs.sendDbRequest(db.get(item), function () {
+    return learnjs.sendAwsRequest(db.get(item), function () {
       return learnjs.fetchAnswer(problemId);
     })
   });
 }
 
-learnjs.sendDbRequest = function (req, retry) {
+learnjs.sendAwsRequest = function (req, retry) {
   var promise = new $.Deferred();
   req.on('error', function (error) {
     if (error.code == 'CredentialsError') {
